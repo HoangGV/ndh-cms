@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soạn thảo bài viết - NDH Blog CMS</title>
+  <meta name="description" content="Trang viết bài trên Người đồng hành">
+  <link rel="icon" type="image/webp" href="/src/icon-ndh-cms.webp">
+  <link rel="apple-touch-icon" href="/src/icon-ndh-cms.webp">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Người đồng hành">
+  <meta property="og:title" content="Soạn thảo bài viết - NDH Blog CMS">
+  <meta property="og:description" content="Trang viết bài trên Người đồng hành">
+  <meta property="og:image" content="/src/ndh-cms.webp">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script src="[https://cdn.jsdelivr.net/npm/marked/marked.min.js](https://cdn.jsdelivr.net/npm/marked/marked.min.js)"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js](https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js)"></script>
+  <link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css](https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css)">
+  <script src="[https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js](https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js)"></script>
+  <link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css](https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css)">
+  <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js)"></script>
+  <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js)"></script>
+  <script>
+    const savedTheme = localStorage.getItem('cms_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="brand">← Quay lại danh sách</a>
+  <div class="nav-actions">
+    <a href="guide.html" class="btn btn-outline btn-sm" target="_blank">Hướng dẫn</a>
+    <button type="button" class="btn btn-outline btn-sm" id="theme-toggle">🌓 Giao diện</button>
+  </div>
+</header>
+
+<main class="container">
+  <div id="alert-box"></div>
+
+  <div id="published-notice" class="alert" style="display:none;">
+    Bài viết này đã xuất bản trên blog. Sau khi bạn chỉnh sửa và bấm gửi duyệt, hệ thống sẽ thông báo để Admin kiểm tra trước khi cập nhật lên trang chính.
+  </div>
+
+  <form id="editor-form" class="card">
+    <div class="form-group">
+      <label>Tiêu đề bài viết *</label>
+      <input type="text" id="title-input" placeholder="Nhập tiêu đề bài viết...">
+    </div>
+
+    <div class="form-group">
+      <label>Đường dẫn tĩnh (Slug)</label>
+      <div class="input-group">
+        <input type="text" id="slug-input" placeholder="duong-dan-bai-viet">
+        <button type="button" class="btn btn-outline btn-slug-reset" id="btn-gen-slug" title="Tạo lại slug từ tiêu đề">↻ Tạo lại</button>
+      </div>
+      <small id="slug-status" style="color: var(--text-muted); display:block; margin-top:4px;">[https://ndh.io.vn/](https://ndh.io.vn/)...</small>
+    </div>
+
+    <div class="form-group">
+      <label>Mô tả ngắn (Description)</label>
+      <input type="text" id="desc-input" placeholder="Tóm tắt ngắn gọn nội dung bài viết...">
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+      <div class="form-group">
+        <label>Thẻ (Tags - cách nhau bởi dấu phẩy)</label>
+        <input type="text" id="tags-input" placeholder="Sư phạm số, AI giáo dục, Đổi mới">
+      </div>
+      <div class="form-group">
+        <label>URL Ảnh bìa (Cover - tùy chọn)</label>
+        <input type="text" id="cover-input" placeholder="[https://images.unsplash.com/](https://images.unsplash.com/)...">
+      </div>
+    </div>
+
+    <!-- TRÌNH SOẠN THẢO MARKDOWN 2 TAB -->
+    <div class="form-group">
+      <div class="editor-tabs">
+        <div class="tab-group">
+          <button type="button" class="tab-btn active" data-tab="write">Viết Markdown</button>
+          <button type="button" class="tab-btn" data-tab="preview">Xem trước (Preview)</button>
+        </div>
+        <div class="editor-meta-right">
+          <span class="autosave-badge" id="autosave-status"></span>
+          <span class="reading-time-badge" id="reading-time-display">⏱️ ~1 phút đọc</span>
+        </div>
+      </div>
+
+      <div id="tab-write">
+        <textarea id="md-textarea" placeholder="Viết nội dung bài viết bằng cú pháp Markdown..."></textarea>
+      </div>
+
+      <div id="tab-preview" class="markdown-preview" style="display:none;"></div>
+    </div>
+
+    <div class="editor-footer" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <a href="index.html" class="btn btn-outline">Hủy</a>
+      <div class="editor-footer-actions" style="display:flex; gap:10px;">
+        <button type="button" id="btn-save-draft" class="btn btn-outline">💾 Lưu tạm</button>
+        <button type="submit" id="btn-publish" class="btn btn-primary">🚀 Xuất bản lên GitHub</button>
+      </div>
+    </div>
+  </form>
+</main>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('cms_theme', next);
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  let currentPostId = Number(params.get('id') || 0);
+  let currentUser = null;
+  let blogDomain = '[https://ndh.io.vn](https://ndh.io.vn)';
+  let slugManuallyEdited = currentPostId > 0;
+  let slugTimer = null;
+
+  const titleInput = document.getElementById('title-input');
+  const slugInput = document.getElementById('slug-input');
+  const descInput = document.getElementById('desc-input');
+  const tagsInput = document.getElementById('tags-input');
+  const coverInput = document.getElementById('cover-input');
+  const mdTextarea = document.getElementById('md-textarea');
+  const slugStatus = document.getElementById('slug-status');
+  const readingTimeDisplay = document.getElementById('reading-time-display');
+  const autosaveStatus = document.getElementById('autosave-status');
+
+  function showAlert(msg, isError = false) {
+    document.getElementById('alert-box').innerHTML = msg
+      ? `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${msg}</div>`
+      : '';
+  }
+
+  async function initEditor() {
+    const meRes = await fetch('/api/me');
+    if (!meRes.ok) {
+      window.location.href = 'index.html';
+      return;
+    }
+    const meData = await meRes.json();
+    currentUser = meData.user;
+    blogDomain = meData.blogDomain || blogDomain;
+
+    document.getElementById('btn-publish').textContent =
+      currentUser.role === 'admin' ? '🚀 Xuất bản lên GitHub' : '📩 Gửi bài chờ Admin duyệt';
+
+    if (currentPostId > 0) {
+      const postRes = await fetch(`/api/posts/detail?id=${currentPostId}`);
+      if (!postRes.ok) {
+        alert('Không tìm thấy bài viết hoặc bạn không có quyền truy cập.');
+        window.location.href = 'index.html';
+        return;
+      }
+      const { post } = await postRes.json();
+      titleInput.value = post.title || '';
+      slugInput.value = post.slug || '';
+      descInput.value = post.description || '';
+      tagsInput.value = post.tags || '';
+      coverInput.value = post.cover || '';
+      mdTextarea.value = post.content || '';
+      slugStatus.textContent = `✓ ${blogDomain}/${post.slug}`;
+
+      if (currentUser.role === 'member' && (post.status === 'published' || post.published_slug)) {
+        document.getElementById('published-notice').style.display = 'block';
+      }
+    } else {
+      slugStatus.textContent = `${blogDomain}/...`;
+    }
+
+    updateReadingTime();
+  }
+
+  // --- TỰ ĐỘNG ƯỚC TÍNH THỜI GIAN ĐỌC ---
+  function calculateReadingTime(rawMd) {
+    let codeLines = 0;
+    const codeBlocks = rawMd.match(/```[\s\S]*?```/g) || [];
+    codeBlocks.forEach(block => {
+      const lines = block.split('\n').filter(l => l.trim() !== '' && !l.trim().startsWith('```'));
+      codeLines += lines.length;
+    });
+    const prose = rawMd
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/\$\$[\s\S]*?\$\$/g, ' congthuc ')
+      .replace(/\$[^\n$]+?\$/g, ' congthuc ')
+      .replace(/[#*`>\-\|\[\]\(\)]+/g, ' ')
+      .trim();
+    const words = prose ? prose.split(/\s+/).length : 0;
+    return Math.max(1, Math.ceil(words / 200 + codeLines / 15));
+  }
+
+  function updateReadingTime() {
+    readingTimeDisplay.textContent = `⏱️ ~${calculateReadingTime(mdTextarea.value)} phút đọc`;
+  }
+
+  // --- TỰ ĐỘNG LƯU SAU 5 GIÂY NGỪNG GÕ ---
+  let autosaveTimer = null;
+  let isDirty = false;
+  let isSaving = false;
+  let isSubmitting = false;
+
+  async function runAutoSave() {
+    if (!isDirty || isSubmitting || isSaving) return;
+    if (!titleInput.value.trim() && !mdTextarea.value.trim()) return;
+
+    isSaving = true;
+    isDirty = false;
+    autosaveStatus.style.color = 'var(--text-muted)';
+    autosaveStatus.textContent = '⏳ Đang lưu tạm...';
+
+    try {
+      const res = await fetch('/api/posts/autosave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          post_id: currentPostId,
+          title: titleInput.value,
+          slug: slugInput.value,
+          description: descInput.value,
+          tags: tagsInput.value,
+          cover: coverInput.value,
+          content: mdTextarea.value
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        if (data.mode === 'db') {
+          if (currentPostId === 0 && data.post_id) {
+            currentPostId = data.post_id;
+            window.history.replaceState(null, '', `${window.location.pathname}?id=${currentPostId}`);
+          }
+          if (!slugManuallyEdited && data.slug) {
+            slugInput.value = data.slug;
+            slugStatus.textContent = `✓ ${blogDomain}/${data.slug}`;
+          }
+          autosaveStatus.style.color = 'var(--success)';
+          autosaveStatus.textContent = `✓ Đã tự động lưu lúc ${data.saved_at}`;
+        } else {
+          autosaveStatus.textContent = '';
+        }
+      } else if (data.error) {
+        autosaveStatus.style.color = 'var(--warning)';
+        autosaveStatus.textContent = `⚠️ ${data.error}`;
+      }
+    } catch {
+      autosaveStatus.textContent = '';
+    } finally {
+      isSaving = false;
+    }
+  }
+
+  function scheduleAutoSave() {
+    isDirty = true;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(runAutoSave, 5000);
+  }
+
+  [titleInput, slugInput, descInput, tagsInput, coverInput, mdTextarea].forEach(el => {
+    el.addEventListener('input', () => {
+      scheduleAutoSave();
+      if (el === mdTextarea) updateReadingTime();
+    });
+  });
+
+  // --- LƯU TẠM THỦ CÔNG & XUẤT BẢN ---
+  async function submitPost(isDraft) {
+    isSubmitting = true;
+    clearTimeout(autosaveTimer);
+    const btnDraft = document.getElementById('btn-save-draft');
+    const btnPub = document.getElementById('btn-publish');
+    btnDraft.disabled = true;
+    btnPub.disabled = true;
+    showAlert(isDraft ? 'Đang lưu bản nháp...' : 'Đang xử lý...', false);
+
+    try {
+      const res = await fetch('/api/posts/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          post_id: currentPostId,
+          is_draft: isDraft,
+          title: titleInput.value,
+          slug: slugInput.value,
+          description: descInput.value,
+          tags: tagsInput.value,
+          cover: coverInput.value,
+          content: mdTextarea.value
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        showAlert(data.error || 'Có lỗi xảy ra.', true);
+        isSubmitting = false;
+        btnDraft.disabled = false;
+        btnPub.disabled = false;
+        return;
+      }
+      sessionStorage.setItem('cms_flash', data.message);
+      window.location.href = 'index.html';
+    } catch {
+      showAlert('Lỗi kết nối tới máy chủ Cloudflare.', true);
+      isSubmitting = false;
+      btnDraft.disabled = false;
+      btnPub.disabled = false;
+    }
+  }
+
+  document.getElementById('btn-save-draft').addEventListener('click', () => submitPost(true));
+  document.getElementById('editor-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitPost(false);
+  });
+
+  // --- XEM TRƯỚC (PREVIEW: BẢNG + KATEX + HIGHLIGHT CODE) ---
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const writePane = document.getElementById('tab-write');
+  const previewPane = document.getElementById('tab-preview');
+
+  function sanitizeHtml(html) {
+    return window.DOMPurify
+      ? DOMPurify.sanitize(html, {
+          ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td'],
+          ADD_ATTR: ['align', 'style', 'class']
+        })
+      : html;
+  }
+
+  function renderPreview(rawMd) {
+    try {
+      const codeTokens = [];
+      const mathTokens = [];
+      let text = rawMd.replace(/\r\n?/g, '\n');
+
+      const fmMatch = text.match(/^---\n[\s\S]*?\n---\n?([\s\S]*)$/);
+      if (fmMatch) text = fmMatch[1];
+
+      text = text.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, m => {
+        const token = `@@CODEBLOCK${codeTokens.length}@@`;
+        codeTokens.push(m);
+        return token;
+      });
+
+      text = text.replace(/\$\$([\s\S]+?)\$\$/g, m => {
+        const token = `@@MATHBLOCK${mathTokens.length}@@`;
+        mathTokens.push(m);
+        return token;
+      });
+      text = text.replace(/(^|[^\\])\$([^\n$]+?)(?<!\\)\$/g, (m, prefix, body) => {
+        const token = `@@MATHINLINE${mathTokens.length}@@`;
+        mathTokens.push('$' + body + '$');
+        return prefix + token;
+      });
+
+      text = text.replace(/@@CODEBLOCK(\d+)@@/g, (_, idx) => codeTokens[Number(idx)]);
+
+      const parsedHtml = marked.parse(text, { gfm: true, breaks: false });
+      let cleanHtml = sanitizeHtml(parsedHtml);
+
+      mathTokens.forEach((expr, i) => {
+        cleanHtml = cleanHtml.replace(`@@MATHBLOCK${i}@@`, () => expr);
+        cleanHtml = cleanHtml.replace(`@@MATHINLINE${i}@@`, () => expr);
+      });
+
+      const mins = calculateReadingTime(rawMd);
+      const coverUrl = coverInput.value.trim();
+      const coverHtml = coverUrl
+        ? `<img src="${sanitizeHtml(coverUrl)}" alt="Cover" style="width:100%; max-height:360px; object-fit:cover; border-radius:8px; margin-bottom:16px;">`
+        : '';
+      const titleHtml = titleInput.value.trim()
+        ? `<h1>${sanitizeHtml(titleInput.value)}</h1><div style="color:var(--text-muted); font-size:0.88rem; margin-bottom:12px;">⏱️ ${mins} phút đọc</div><hr style="margin:12px 0; border-color:var(--border);">`
+        : '';
+
+      previewPane.innerHTML = coverHtml + titleHtml + cleanHtml;
+
+      previewPane.querySelectorAll('table').forEach(table => {
+        const wrap = document.createElement('div');
+        wrap.className = 'table-wrap';
+        wrap.style.marginBottom = '1em';
+        table.parentNode.insertBefore(wrap, table);
+        wrap.appendChild(table);
+      });
+
+      previewPane.querySelectorAll('pre').forEach(pre => {
+        const codeEl = pre.querySelector('code');
+        if (!codeEl) return;
+        const langClass = Array.from(codeEl.classList).find(c => c.startsWith('language-'));
+        const langName = langClass ? langClass.replace('language-', '').toUpperCase() : 'CODE';
+        if (window.hljs) hljs.highlightElement(codeEl);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-block-wrap';
+        const header = document.createElement('div');
+        header.className = 'code-block-header';
+        header.innerHTML = `<span>${langName}</span>`;
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'code-copy-btn';
+        copyBtn.textContent = 'Sao chép';
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(codeEl.innerText).then(() => {
+            copyBtn.textContent = 'Đã chép ✓';
+            setTimeout(() => (copyBtn.textContent = 'Sao chép'), 1800);
+          });
+        });
+
+        header.appendChild(copyBtn);
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(header);
+        wrapper.appendChild(pre);
+      });
+
+      if (window.renderMathInElement) {
+        renderMathInElement(previewPane, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    } catch (err) {
+      previewPane.innerHTML = `<div class="alert alert-error">Lỗi hiển thị Preview: ${err.message}</div>`;
+    }
+  }
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.tab === 'preview') {
+        writePane.style.display = 'none';
+        previewPane.style.display = 'block';
+        renderPreview(mdTextarea.value || '*Chưa có nội dung để hiển thị...*');
+      } else {
+        previewPane.style.display = 'none';
+        writePane.style.display = 'block';
+      }
+    });
+  });
+
+  // --- SINH SLUG TIẾNG VIỆT & KIỂM TRA TRÙNG LẶP ---
+  function toVietnameseSlug(str) {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/[\s-]+/g, '-');
+  }
+
+  function checkUniqueSlug(rawText) {
+    clearTimeout(slugTimer);
+    if (!rawText.trim()) {
+      slugStatus.textContent = `${blogDomain}/...`;
+      return;
+    }
+    slugStatus.textContent = `Đang kiểm tra: ${blogDomain}/${rawText}...`;
+    slugTimer = setTimeout(async () => {
+      const res = await fetch(`/api/slug/check?text=${encodeURIComponent(rawText)}&exclude_id=${currentPostId}`);
+      const data = await res.json();
+      if (data.slug) {
+        slugInput.value = data.slug;
+        slugStatus.textContent = `✓ ${blogDomain}/${data.slug}`;
+      }
+    }, 350);
+  }
+
+  titleInput.addEventListener('input', () => {
+    if (!slugManuallyEdited) {
+      slugInput.value = toVietnameseSlug(titleInput.value);
+      checkUniqueSlug(slugInput.value);
+    }
+  });
+
+  slugInput.addEventListener('input', () => {
+    slugManuallyEdited = true;
+    slugInput.value = toVietnameseSlug(slugInput.value);
+    checkUniqueSlug(slugInput.value);
+  });
+
+  document.getElementById('btn-gen-slug').addEventListener('click', () => {
+    slugManuallyEdited = false;
+    checkUniqueSlug(titleInput.value);
+    scheduleAutoSave();
+  });
+
+  initEditor();
+</script>
+</body>
+</html>

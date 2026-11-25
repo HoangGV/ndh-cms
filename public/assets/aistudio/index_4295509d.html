@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NDH Blog CMS</title>
+  <meta name="description" content="Trang viết bài trên Người đồng hành">
+  <link rel="icon" type="image/webp" href="/src/icon-ndh-cms.webp">
+  <link rel="apple-touch-icon" href="/src/icon-ndh-cms.webp">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Người đồng hành">
+  <meta property="og:title" content="NDH Blog CMS">
+  <meta property="og:description" content="Trang viết bài trên Người đồng hành">
+  <meta property="og:image" content="/src/ndh-cms.webp">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script>
+    const savedTheme = localStorage.getItem('cms_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="brand">NDH Blog CMS</a>
+  <div class="nav-actions" id="nav-actions">
+    <button type="button" class="btn btn-outline btn-sm" id="theme-toggle">🌓 Giao diện</button>
+  </div>
+</header>
+
+<main class="container">
+  <div id="alert-box"></div>
+
+  <!-- KHUNG ĐĂNG NHẬP -->
+  <div id="login-view" class="card" style="max-width: 420px; margin: 40px auto; display:none;">
+    <h2 style="margin-bottom: 16px;">Đăng nhập hệ thống</h2>
+    <form id="login-form">
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="login-username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Đăng nhập</button>
+    </form>
+    <p style="margin-top: 16px; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+      Chưa có tài khoản? <a href="register.html" style="color: var(--primary); font-weight: 600;">Đăng ký thành viên</a>
+    </p>
+  </div>
+
+  <!-- KHUNG QUẢN LÝ BÀI VIẾT -->
+  <div id="dashboard-view" style="display:none;">
+    <div id="notif-card" class="card" style="display:none;">
+      <h3 style="margin-bottom: 12px;" id="notif-title">🔔 Thông báo mới</h3>
+      <div id="notif-list"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+        <h2 id="board-heading">Quản lý bài viết</h2>
+        <a href="editor.html" class="btn btn-primary btn-sm">+ Viết bài mới</a>
+      </div>
+
+      <nav class="filter-bar" id="filter-bar" aria-label="Lọc trạng thái bài viết"></nav>
+
+      <div class="table-wrap">
+        <table class="responsive-table">
+          <thead>
+            <tr>
+              <th>Tiêu đề & Đường dẫn</th>
+              <th>Tác giả</th>
+              <th>Trạng thái</th>
+              <th>Cập nhật</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="posts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('cms_theme', next);
+  });
+
+  function esc(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function showAlert(msg, isError = false) {
+    const box = document.getElementById('alert-box');
+    box.innerHTML = msg ? `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${esc(msg)}</div>` : '';
+  }
+
+  let currentUser = null;
+  let allPosts = [];
+  let currentFilter = 'all';
+  let blogDomain = '[https://ndh.io.vn](https://ndh.io.vn)';
+
+  async function init() {
+    const flash = sessionStorage.getItem('cms_flash');
+    if (flash) {
+      sessionStorage.removeItem('cms_flash');
+      showAlert(flash, false);
+    }
+
+    const res = await fetch('/api/me');
+    if (!res.ok) {
+      document.getElementById('login-view').style.display = 'block';
+      document.getElementById('nav-actions').innerHTML += `<a href="register.html" class="btn btn-outline btn-sm">Đăng ký</a>`;
+      return;
+    }
+
+    const data = await res.json();
+    currentUser = data.user;
+    blogDomain = data.blogDomain || blogDomain;
+
+    document.getElementById('nav-actions').innerHTML += `
+      <a href="guide.html" class="btn btn-outline btn-sm">Hướng dẫn</a>
+      <a href="account.html" class="btn btn-outline btn-sm">👤 ${esc(currentUser.full_name)} (${esc(currentUser.role.toUpperCase())})</a>
+      <a href="editor.html" class="btn btn-primary btn-sm">+ Viết bài mới</a>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-logout">Đăng xuất</button>
+    `;
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.reload();
+    });
+
+    document.getElementById('board-heading').textContent =
+      currentUser.role === 'admin' ? 'Quản lý bài viết' : 'Bài viết của bạn';
+    document.getElementById('dashboard-view').style.display = 'block';
+
+    renderNotifications(data.notifications || []);
+    await loadPosts();
+  }
+
+  function renderNotifications(list) {
+    const card = document.getElementById('notif-card');
+    if (!list.length) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'block';
+    document.getElementById('notif-title').textContent = `🔔 Thông báo mới (${list.length})`;
+    document.getElementById('notif-list').innerHTML = list.map(n => `
+      <div class="notif-item" id="notif-${n.id}">
+        <div>
+          ${esc(n.message)}
+          <div style="font-size:0.8rem; color:var(--text-muted);">${esc(n.created_at)}</div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="markNotifRead(${n.id})">Đã hiểu</button>
+      </div>
+    `).join('');
+  }
+
+  async function markNotifRead(id) {
+    await fetch('/api/notifications/read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const el = document.getElementById(`notif-${id}`);
+    if (el) el.remove();
+    const remain = document.querySelectorAll('.notif-item').length;
+    if (remain === 0) document.getElementById('notif-card').style.display = 'none';
+    else document.getElementById('notif-title').textContent = `🔔 Thông báo mới (${remain})`;
+  }
+
+  async function loadPosts() {
+    const res = await fetch('/api/posts');
+    const data = await res.json();
+    allPosts = data.posts || [];
+    renderFilterBar();
+    renderPostsTable();
+  }
+
+  function renderFilterBar() {
+    const counts = { all: allPosts.length, draft: 0, pending: 0, published: 0, rejected: 0, delete_requested: 0 };
+    allPosts.forEach(p => {
+      if (counts[p.status] !== undefined) counts[p.status]++;
+      if (Number(p.delete_requested) === 1) counts.delete_requested++;
+    });
+
+    const tabs = [
+      { key: 'all', label: 'Tất cả' },
+      { key: 'draft', label: 'Bản nháp' },
+      { key: 'pending', label: 'Chờ duyệt' },
+      { key: 'published', label: 'Đã đăng' },
+      { key: 'rejected', label: 'Bị từ chối' },
+      { key: 'delete_requested', label: 'Yêu cầu xóa' }
+    ];
+
+    document.getElementById('filter-bar').innerHTML = tabs.map(t => `
+      <button type="button" class="filter-pill ${currentFilter === t.key ? 'active' : ''}" onclick="setFilter('${t.key}')">
+        ${t.label} <span class="pill-count">${counts[t.key]}</span>
+      </button>
+    `).join('');
+  }
+
+  function setFilter(key) {
+    currentFilter = key;
+    renderFilterBar();
+    renderPostsTable();
+  }
+
+  function renderPostsTable() {
+    const filtered = allPosts.filter(p => {
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'delete_requested') return Number(p.delete_requested) === 1;
+      return p.status === currentFilter;
+    });
+
+    const tbody = document.getElementById('posts-tbody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:28px;">Không có bài viết nào trong mục này.</td></tr>`;
+      return;
+    }
+
+    const statusLabels = {
+      draft: 'Bản nháp',
+      pending: 'Chờ duyệt',
+      published: 'Đã đăng',
+      rejected: 'Bị từ chối'
+    };
+
+    tbody.innerHTML = filtered.map(p => {
+      const isLive = p.status === 'published' || Boolean(p.published_slug);
+      const isDelReq = Number(p.delete_requested) === 1;
+
+      let actions = '';
+      if (currentUser.role === 'admin' || p.author_id === currentUser.id) {
+        actions += `<a href="editor.html?id=${p.id}" class="btn btn-outline btn-sm">${p.status === 'draft' ? 'Viết tiếp' : 'Sửa'}</a>`;
+      }
+      if (currentUser.role === 'admin' && p.status === 'pending') {
+        actions += `<button type="button" class="btn btn-success btn-sm" onclick="postAction(${p.id}, 'approve')">Duyệt</button>`;
+        actions += `<button type="button" class="btn btn-outline btn-sm" onclick="rejectPost(${p.id})">Từ chối</button>`;
+      }
+      if (currentUser.role === 'admin' && isDelReq) {
+        actions += `<button type="button" class="btn btn-danger btn-sm" onclick="postAction(${p.id}, 'delete', 'Chấp thuận yêu cầu và xóa vĩnh viễn bài viết này khỏi GitHub?')">Duyệt xóa</button>`;
+        actions += `<button type="button" class="btn btn-outline btn-sm" onclick="postAction(${p.id}, 'reject_delete')">Từ chối xóa</button>`;
+      }
+      if (currentUser.role === 'admin' && !isDelReq) {
+        actions += `<button type="button" class="btn btn-danger btn-sm" onclick="postAction(${p.id}, 'delete', 'Bạn chắc chắn muốn xóa bài viết này?')">Xóa</button>`;
+      } else if (currentUser.role === 'member' && p.author_id === currentUser.id) {
+        if (!isLive) {
+          actions += `<button type="button" class="btn btn-danger btn-sm" onclick="postAction(${p.id}, 'delete', 'Xóa bài viết này?')">Xóa</button>`;
+        } else if (!isDelReq) {
+          actions += `<button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--danger);" onclick="requestDeletePost(${p.id})">Yêu cầu xóa</button>`;
+        } else {
+          actions += `<button type="button" class="btn btn-outline btn-sm" onclick="postAction(${p.id}, 'cancel_delete_request')">Hủy yêu cầu xóa</button>`;
+        }
+      }
+
+      return `
+        <tr>
+          <td data-label="">
+            <strong>${esc(p.title || '(Bản nháp chưa đặt tiêu đề)')}</strong><br>
+            <small style="color:var(--text-muted);">${esc(blogDomain)}/${esc(p.slug)} • ${p.reading_time || 1} phút đọc</small>
+            ${p.status === 'rejected' && p.reject_reason ? `<div style="color:var(--danger); font-size:0.82rem; margin-top:4px;">Lý do từ chối: ${esc(p.reject_reason)}</div>` : ''}
+            ${isDelReq ? `<div style="color:var(--danger); font-size:0.82rem; margin-top:4px;">⚠️ Yêu cầu xóa: ${esc(p.delete_reason || 'Tác giả đề nghị xóa bài')}</div>` : ''}
+          </td>
+          <td data-label="Tác giả:">${esc(p.author_name)} <small>(${esc(p.author_role)})</small></td>
+          <td data-label="Trạng thái:">
+            <span class="badge badge-${esc(p.status)}">${statusLabels[p.status] || esc(p.status)}</span>
+            ${isDelReq ? '<br><span class="badge badge-delete-req">Chờ duyệt xóa</span>' : ''}
+          </td>
+          <td data-label="Cập nhật:"><small>${esc(p.updated_at)}</small></td>
+          <td data-label=""><div class="action-group" style="margin-top:6px;">${actions}</div></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function postAction(postId, action, confirmMsg = null, reason = '') {
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    showAlert('Đang xử lý...', false);
+    const res = await fetch('/api/posts/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_id: postId, action, reason })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      showAlert(data.error || 'Có lỗi xảy ra.', true);
+      return;
+    }
+    showAlert(data.message || 'Thao tác thành công!', false);
+    await loadPosts();
+  }
+
+  function rejectPost(postId) {
+    const reason = prompt('Nhập lý do từ chối bài viết để gửi thông báo cho thành viên:');
+    if (reason !== null) {
+      postAction(postId, 'reject', null, reason.trim() || 'Nội dung chưa đạt yêu cầu.');
+    }
+  }
+
+  function requestDeletePost(postId) {
+    const reason = prompt('Nhập lý do bạn muốn xóa bài viết này để gửi tới Quản trị viên:');
+    if (reason !== null) {
+      postAction(postId, 'request_delete', null, reason.trim() || 'Tác giả yêu cầu gỡ bài viết.');
+    }
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      showAlert(data.error || 'Đăng nhập thất bại.', true);
+      return;
+    }
+    window.location.reload();
+  });
+
+  init();
+</script>
+</body>
+</html>

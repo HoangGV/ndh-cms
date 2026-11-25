@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hướng dẫn viết bài - NDH Blog CMS</title>
+  <meta name="description" content="Trang viết bài trên Người đồng hành">
+  <link rel="icon" type="image/webp" href="/src/icon-ndh-cms.webp">
+  <link rel="apple-touch-icon" href="/src/icon-ndh-cms.webp">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Người đồng hành">
+  <meta property="og:title" content="Hướng dẫn viết bài - NDH Blog CMS">
+  <meta property="og:description" content="Trang viết bài trên Người đồng hành">
+  <meta property="og:image" content="/src/ndh-cms.webp">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script>
+    const savedTheme = localStorage.getItem('cms_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+  <style>
+    .readme-body { max-width: 860px; margin: 0 auto; }
+    .readme-body h1 { font-size: 1.7rem; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+    .readme-body h2 { font-size: 1.28rem; margin-top: 28px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .readme-body h3 { font-size: 1.05rem; margin-top: 20px; margin-bottom: 8px; }
+    .readme-body p { margin-bottom: 12px; }
+    .readme-body ul, .readme-body ol { margin: 0 0 14px 22px; }
+    .readme-body li { margin-bottom: 6px; }
+    .readme-body hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; }
+    .readme-body code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", Consolas, monospace; font-size: 0.88em; }
+    .readme-code-box { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin: 10px 0 16px; background: var(--bg); }
+    .readme-code-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    .readme-code-box pre { margin: 0; padding: 14px; overflow-x: auto; font-family: "Fira Code", Consolas, monospace; font-size: 0.88rem; line-height: 1.55; background: var(--code-bg); color: var(--text); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="brand">NDH Blog CMS</a>
+  <div class="nav-actions" id="nav-actions">
+    <button type="button" class="btn btn-outline btn-sm" id="theme-toggle">🌓 Giao diện</button>
+    <a href="guide.html" class="btn btn-outline btn-sm" style="border-color: var(--primary); color: var(--primary);">Hướng dẫn</a>
+  </div>
+</header>
+
+<main class="container">
+  <article class="card readme-body">
+    <h1>NDH | Người Đồng Hành</h1>
+
+    <h2>1. Hướng dẫn tạo bài đăng mới</h2>
+    <p>Để tạo bài viết mới trên hệ thống, bấm <strong>+ Viết bài mới</strong>, điền các thông tin ở biểu mẫu phía trên (Tiêu đề, Slug, Mô tả ngắn, Thẻ, Ảnh bìa) và soạn nội dung bằng cú pháp <strong>Markdown</strong> ở khung bên dưới (hệ thống sẽ tự động đóng gói phần thông tin đầu bài <code>--- ... ---</code> và tự lưu nháp sau 5 giây ngừng gõ).</p>
+
+    <h3>Cấu trúc nội dung mẫu chuẩn</h3>
+    <p>Chia bài viết theo các đề mục <code>##</code> và <code>###</code> để hệ thống tự động tạo khung <strong>Mục lục</strong> cho bài viết:</p>
+
+    <div class="readme-code-box">
+      <div class="readme-code-header">
+        <span>markdown</span>
+        <button type="button" class="code-copy-btn" onclick="copyCodeBlock(this)">Sao chép</button>
+      </div>
+      <pre># Tiêu đề bài viết
+
+Đoạn văn mở đầu giới thiệu nội dung chính của bài viết.
+
+## 1. Ứng dụng công nghệ trong lớp học
+
+Nội dung phân tích và ví dụ minh họa.
+
+### 1.1. Triển khai thực tế
+
+Chi tiết các bước thực hiện.
+
+## 2. Tổng kết
+
+Tóm tắt những điểm quan trọng cần ghi nhớ.</pre>
+    </div>
+
+    <h3>Lưu ý khi tạo bài viết</h3>
+    <ul>
+      <li>Đường dẫn tĩnh (<strong>Slug</strong>) viết thường, không dấu, nối với nhau bằng dấu gạch ngang (ví dụ: <code>bai-viet-so-1</code>). Slug chính là đường dẫn của bài viết trên blog (<code>/bai-viet-so-1</code>).</li>
+      <li>Không đặt slug trùng với các trang hệ thống: <code>tool</code>, <code>tag</code>, <code>gioi-thieu</code>, <code>tim-kiem</code>, <code>404</code>.</li>
+      <li>Các thẻ khai báo trong ô <strong>Tags</strong> (cách nhau bởi dấu phẩy) sẽ tự động được tổng hợp vào trang <strong>Tags</strong> (<code>/tag</code>) và bộ lọc ở trang chủ, không cần tạo trước.</li>
+      <li>Bài viết mới nhất theo ngày đăng sẽ tự động hiển thị lên đầu danh sách.</li>
+    </ul>
+
+    <hr>
+
+    <h2>2. Hướng dẫn sử dụng công thức LaTeX và khung mã nguồn có nút sao chép</h2>
+
+    <h3>Công thức toán học LaTeX (KaTeX)</h3>
+    <p>Hệ thống tích hợp sẵn KaTeX để biên dịch trực tiếp công thức toán học trong bài viết Markdown:</p>
+    <ol>
+      <li><strong>Công thức trong dòng:</strong> đặt công thức giữa hai dấu <code>$</code>.
+        <ul>
+          <li>Ví dụ: <code>$E = mc^2$</code> hoặc <code>$\Delta = b^2 - 4ac$</code>.</li>
+        </ul>
+      </li>
+      <li><strong>Khối công thức riêng biệt:</strong> đặt công thức giữa hai cặp dấu <code>$$</code> để căn giữa thành một khối độc lập.</li>
+    </ol>
+
+    <div class="readme-code-box">
+      <div class="readme-code-header">
+        <span>markdown</span>
+        <button type="button" class="code-copy-btn" onclick="copyCodeBlock(this)">Sao chép</button>
+      </div>
+      <pre>$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$</pre>
+    </div>
+
+    <h3>Khối mã nguồn có nút sao chép</h3>
+    <p>Đặt đoạn mã giữa cặp ba dấu backtick (<code>```</code>) kèm tên ngôn ngữ (như <code>typescript</code>, <code>python</code>, <code>html</code>, <code>css</code>, <code>bash</code>). Khung mã nguồn sẽ tự động hiển thị tên ngôn ngữ và nút <strong>Sao chép</strong> ở góc trên bên phải.</p>
+
+    <div class="readme-code-box">
+      <div class="readme-code-header">
+        <span>markdown</span>
+        <button type="button" class="code-copy-btn" onclick="copyCodeBlock(this)">Sao chép</button>
+      </div>
+      <pre>```python
+def chao_mung(ten):
+    return f"Xin chào {ten} đến với NDH!"
+```</pre>
+    </div>
+
+    <h3>Bảng dữ liệu Markdown</h3>
+    <p>Luôn để trống một dòng phía trên bảng để hệ thống nhận diện chính xác các cột:</p>
+
+    <div class="readme-code-box">
+      <div class="readme-code-header">
+        <span>markdown</span>
+        <button type="button" class="code-copy-btn" onclick="copyCodeBlock(this)">Sao chép</button>
+      </div>
+      <pre>| Bước | Hành động | Thời lượng | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **01** | Chọn 1 nhiệm vụ duy nhất | - | Không làm đa nhiệm |
+| **02** | Cài đặt bộ đếm | 25 phút | Tắt mọi thông báo |</pre>
+    </div>
+  </article>
+</main>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('cms_theme', next);
+  });
+
+  function copyCodeBlock(btn) {
+    const codeText = btn.closest('.readme-code-box').querySelector('pre').innerText;
+    navigator.clipboard.writeText(codeText).then(() => {
+      btn.textContent = 'Đã chép ✓';
+      setTimeout(() => (btn.textContent = 'Sao chép'), 1800);
+    });
+  }
+
+  (async function () {
+    const res = await fetch('/api/me');
+    if (!res.ok) {
+      window.location.href = 'index.html';
+      return;
+    }
+    const { user } = await res.json();
+    document.getElementById('nav-actions').innerHTML += `
+      <a href="account.html" class="btn btn-outline btn-sm">👤 ${user.full_name} (${user.role.toUpperCase()})</a>
+      <a href="editor.html" class="btn btn-primary btn-sm">+ Viết bài mới</a>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-logout">Đăng xuất</button>
+    `;
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = 'index.html';
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+name = "ndh-blog-cms"
+main = "worker/index.ts"
+compatibility_date = "2025-04-01"
+
+# Thư mục giao diện React sau khi build (`npm run build` -> ./dist)
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# Kết nối Cloudflare D1 Database
+# Lấy Database ID trên Cloudflare Dashboard: Storage & Databases -> D1 -> ndh-cms-db
+[[d1_databases]]
+binding = "DB"
+database_name = "ndh-cms-db"
+database_id = "f0497c7e-1aab-4b45-a8ee-f6343084feb0"
+
+# Biến công khai (TUYỆT ĐỐI KHÔNG ghi GITHUB_TOKEN hay JWT_SECRET vào file này!)
+# Thêm GITHUB_TOKEN và JWT_SECRET dạng Secret trên Cloudflare Dashboard -> Settings -> Variables and Secrets
+[vars]
+GITHUB_OWNER = "hoanggv"
+GITHUB_REPO = "ndh"
+GITHUB_BRANCH = "main"
+GITHUB_CONTENT_PATH = "src/content/blog"
+BLOG_DOMAIN = "https://ndh.io.vn"

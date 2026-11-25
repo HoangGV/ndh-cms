@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký thành viên - NDH Blog CMS</title>
+  <meta name="description" content="Trang viết bài trên Người đồng hành">
+  <link rel="icon" type="image/webp" href="/src/icon-ndh-cms.webp">
+  <link rel="apple-touch-icon" href="/src/icon-ndh-cms.webp">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Người đồng hành">
+  <meta property="og:title" content="Đăng ký thành viên - NDH Blog CMS">
+  <meta property="og:description" content="Trang viết bài trên Người đồng hành">
+  <meta property="og:image" content="/src/ndh-cms.webp">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script>
+    const savedTheme = localStorage.getItem('cms_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="brand">NDH Blog CMS</a>
+  <div class="nav-actions">
+    <button type="button" class="btn btn-outline btn-sm" id="theme-toggle">🌓 Giao diện</button>
+    <a href="index.html" class="btn btn-outline btn-sm">Đăng nhập</a>
+  </div>
+</header>
+
+<main class="container">
+  <div id="alert-box"></div>
+
+  <div class="card" style="max-width: 450px; margin: 40px auto;">
+    <h2 style="margin-bottom: 16px;">Đăng ký tài khoản thành viên</h2>
+    <form id="register-form">
+      <div class="form-group">
+        <label>Họ và tên hiển thị (Tác giả)</label>
+        <input type="text" id="reg-fullname" placeholder="Nguyễn Văn A" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Tên đăng nhập (Username)</label>
+        <input type="text" id="reg-username" placeholder="nguyenvana" required>
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu (tối thiểu 6 ký tự)</label>
+        <input type="password" id="reg-password" required>
+      </div>
+      <div class="form-group">
+        <label>Nhập lại mật khẩu</label>
+        <input type="password" id="reg-confirm" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Tạo tài khoản</button>
+    </form>
+    <p style="margin-top: 16px; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+      Đã có tài khoản? <a href="index.html" style="color: var(--primary); font-weight: 600;">Đăng nhập tại đây</a>
+    </p>
+  </div>
+</main>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('cms_theme', next);
+  });
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('alert-box');
+    const fullName = document.getElementById('reg-fullname').value;
+    const username = document.getElementById('reg-username').value;
+    const password = document.getElementById('reg-password').value;
+    const confirm = document.getElementById('reg-confirm').value;
+
+    if (password !== confirm) {
+      alertBox.innerHTML = `<div class="alert alert-error">Mật khẩu xác nhận không khớp.</div>`;
+      return;
+    }
+
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name: fullName, username, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      alertBox.innerHTML = `<div class="alert alert-error">${data.error || 'Đăng ký thất bại.'}</div>`;
+      return;
+    }
+    sessionStorage.setItem('cms_flash', 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.');
+    window.location.href = 'index.html';
+  });
+</script>
+</body>
+</html>

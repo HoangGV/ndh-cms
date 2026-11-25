@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Người Đồng Hành CMS</title>
+    <meta name="description" content="Hệ thống quản trị bài viết dành cho Người Đồng Hành." />
+    <link rel="icon" type="image/webp" href="/src/icon-ndh-cms.webp" />
+    <link rel="apple-touch-icon" href="/src/icon-ndh-cms.webp" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Người Đồng Hành" />
+    <meta property="og:title" content="Người Đồng Hành CMS" />
+    <meta property="og:description" content="Hệ thống quản trị bài viết dành cho Người Đồng Hành." />
+    <meta property="og:image" content="/src/ndh-cms.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        var saved = localStorage.getItem('cms_theme');
+        var theme = saved === 'dark' || saved === 'light' ? saved : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-slate-50 text-slate-900 dark:bg-[#0B1120] dark:text-slate-100 antialiased selection:bg-[#4169E1]/20 selection:text-[#4169E1]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

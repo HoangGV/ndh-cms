@@ -1,0 +1,6 @@
+{
+  "name": "NDH Blog CMS",
+  "description": "Hệ thống quản trị bài viết Markdown, LaTeX và xuất bản GitHub chạy trên Cloudflare Workers & D1 dành cho Người Đồng Hành.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
