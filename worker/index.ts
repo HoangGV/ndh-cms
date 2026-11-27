@@ -1363,6 +1363,13 @@ export async function handleApi(request: Request, env: WorkerEnv, url: URL): Pro
 
       // Delete post (Admin any; Member unpublished only)
       if (action === 'delete') {
+        if (String(body.confirm_text || '') !== 'DELETE') {
+          return jsonResponse(
+            { ok: false, error: 'Vui lòng nhập chính xác chữ in hoa "DELETE" để xác nhận xóa.' },
+            400
+          );
+        }
+
         const isLive = post.status === 'published' || Boolean(post.published_slug);
         const canDelete = user.role === 'admin' || (post.author_id === user.id && !isLive);
         if (!canDelete) {

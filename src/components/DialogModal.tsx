@@ -11,8 +11,9 @@ interface DialogModalProps {
   inputLabel?: string;
   inputPlaceholder?: string;
   defaultValue?: string;
+  requiredConfirmText?: string;
   loading?: boolean;
-  onConfirm: (inputValue: string) => void;
+  onConfirm: (inputValue: string, confirmText?: string) => void;
   onClose: () => void;
 }
 
@@ -26,15 +27,18 @@ export function DialogModal({
   inputLabel,
   inputPlaceholder,
   defaultValue = '',
+  requiredConfirmText,
   loading = false,
   onConfirm,
   onClose,
 }: DialogModalProps) {
   const [value, setValue] = useState(defaultValue);
+  const [confirmInput, setConfirmInput] = useState('');
 
   useEffect(() => {
     if (open) {
       setValue(defaultValue);
+      setConfirmInput('');
     }
   }, [open, defaultValue]);
 
@@ -48,6 +52,13 @@ export function DialogModal({
   }, [open, loading, onClose]);
 
   if (!open) return null;
+
+  const isConfirmMatched = !requiredConfirmText || confirmInput === requiredConfirmText;
+  const hasCaseMismatch =
+    Boolean(requiredConfirmText) &&
+    confirmInput.length > 0 &&
+    confirmInput !== requiredConfirmText &&
+    confirmInput.toUpperCase() === requiredConfirmText;
 
   return (
     <div
@@ -87,9 +98,46 @@ export function DialogModal({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder={inputPlaceholder}
-              autoFocus
+              autoFocus={!requiredConfirmText}
               className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#4169E1]"
             />
+          </div>
+        )}
+
+        {requiredConfirmText && (
+          <div className="mt-4">
+            <label
+              htmlFor="modal-confirm-phrase"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+            >
+              Nhập chính xác{' '}
+              <code className="px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 font-mono text-xs font-semibold text-red-600 dark:text-red-400">
+                {requiredConfirmText}
+              </code>{' '}
+              (viết hoa) để tiếp tục
+            </label>
+            <input
+              id="modal-confirm-phrase"
+              type="text"
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && isConfirmMatched && !loading) {
+                  e.preventDefault();
+                  onConfirm(value, confirmInput);
+                }
+              }}
+              placeholder={requiredConfirmText}
+              autoComplete="off"
+              spellCheck={false}
+              autoFocus
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm font-mono tracking-wider text-slate-900 dark:text-slate-100 focus:outline-none focus:border-red-500"
+            />
+            {hasCaseMismatch && (
+              <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                Cần bật Caps Lock / nhập đúng chữ in hoa "{requiredConfirmText}".
+              </p>
+            )}
           </div>
         )}
 
@@ -104,9 +152,9 @@ export function DialogModal({
           </button>
           <button
             type="button"
-            disabled={loading}
-            onClick={() => onConfirm(value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer disabled:opacity-50 ${
+            disabled={loading || !isConfirmMatched}
+            onClick={() => onConfirm(value, confirmInput)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
               variant === 'danger'
                 ? 'bg-red-600 hover:bg-red-700'
                 : 'bg-[#4169E1] hover:bg-[#3154C4]'

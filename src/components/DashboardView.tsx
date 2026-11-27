@@ -133,11 +133,16 @@ export function DashboardView({
     onNotificationsChange([]);
   };
 
-  const executePostAction = async (postId: number, action: string, reason = '') => {
+  const executePostAction = async (
+    postId: number,
+    action: string,
+    reason = '',
+    confirmText = ''
+  ) => {
     setActionBusyId(postId);
     const res = await apiRequest('/api/posts/action', {
       method: 'POST',
-      body: { post_id: postId, action, reason },
+      body: { post_id: postId, action, reason, confirm_text: confirmText },
     });
     setActionBusyId(null);
     setModalState(null);
@@ -674,8 +679,13 @@ export function DashboardView({
             ? 'Ví dụ: Cần bổ sung ví dụ minh họa và kiểm tra lại công thức ở mục 2...'
             : 'Ví dụ: Bài viết trùng nội dung hoặc cần gỡ bỏ...'
         }
+        requiredConfirmText={
+          modalState?.type === 'delete' || modalState?.type === 'approve_delete'
+            ? 'DELETE'
+            : undefined
+        }
         onClose={() => setModalState(null)}
-        onConfirm={(inputVal) => {
+        onConfirm={(inputVal, confirmText) => {
           if (!modalState) return;
           if (modalState.type === 'reject') {
             executePostAction(
@@ -690,7 +700,7 @@ export function DashboardView({
               inputVal.trim() || 'Tác giả yêu cầu gỡ bài viết.'
             );
           } else {
-            executePostAction(modalState.post.id, 'delete');
+            executePostAction(modalState.post.id, 'delete', '', confirmText || '');
           }
         }}
       />
